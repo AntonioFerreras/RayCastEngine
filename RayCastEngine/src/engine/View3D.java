@@ -35,7 +35,7 @@ public class View3D extends JPanel {
 
 	// Other
 	double drawDist = Game.cellWidth * 14;
-	float m = Game.m;
+	int m = Game.m;
 	int scaledPlaneWidth = (int) (Game.planeWidth * m);
 	int scaledPlaneHeight = (int) (Game.planeHeight * m);
 	boolean drawFPS = true;
@@ -57,8 +57,13 @@ public class View3D extends JPanel {
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-
+		
 		Graphics2D g2d = (Graphics2D) g;
+		
+		//Recalculate Screen Vars
+		m = Game.m;
+		scaledPlaneWidth = (int) (Game.planeWidth * m);
+		scaledPlaneHeight = (int) (Game.planeHeight * m);
 
 		// Draw sky
 		int a1 = (int) (map(Game.camDir + Game.FOV / 2, 0, 360, skyWidth * 2, skyWidth));
@@ -66,6 +71,7 @@ public class View3D extends JPanel {
 
 		g2d.drawImage(sprSky, 0, 0, scaledPlaneWidth, scaledPlaneHeight / 2, a1, 0, a2, skyHeight, null);
 
+		//Draw floor
 		g2d.setColor(new Color(50, 50, 50));
 		g2d.fillRect(0, scaledPlaneHeight / 2, scaledPlaneWidth, scaledPlaneHeight / 2);
 
@@ -136,17 +142,17 @@ public class View3D extends JPanel {
 			// Draw strips
 			g2d.setStroke(new BasicStroke(0));
 			if (!drawTextures) {
-				g2d.setColor(new Color(135, 56, 98));
+				g2d.setColor(Color.white);
 
-				g2d.fillRect((int) (Game.stripResolution * i * m),
-						(int) (((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m),
-						(int) (Game.stripResolution * m), (int) (projectedHeight * m));
+				g2d.fillRect(Game.stripResolution * i * m,
+						((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
+						Game.stripResolution * m, projectedHeight * m);
 			} else {
 				//draw wall
-				g2d.drawImage(texCurrent, (int) (Game.stripResolution * i * m),
-						(int) (((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m),
-						(int) ((Game.stripResolution * i + Game.stripResolution) * m),
-						(int) ((Game.planeHeight / 2 + standardProjectedHeight / 2) * m), texOffset, 0,
+				g2d.drawImage(texCurrent, Game.stripResolution * i * m,
+						((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
+						(Game.stripResolution * i + Game.stripResolution) * m,
+						(Game.planeHeight / 2 + standardProjectedHeight / 2) * m, texOffset, 0,
 						texOffset + Game.stripResolution, currentWallHeight, null);
 
 				// Draw floor
@@ -182,9 +188,9 @@ public class View3D extends JPanel {
 					alpha = 255;
 				g2d.setColor(new Color(50, 50, 50, alpha));
 				g2d.setStroke(new BasicStroke(0));
-				g2d.fillRect((int) (Game.stripResolution * i * m),
-						(int) (((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m),
-						(int) (Game.stripResolution * m), (int) (projectedHeight * m));
+				g2d.fillRect(Game.stripResolution * i * m,
+						((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
+						 Game.stripResolution * m, projectedHeight * m);
 			}
 		}
 
