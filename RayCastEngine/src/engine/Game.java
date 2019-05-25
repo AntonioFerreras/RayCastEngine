@@ -7,6 +7,7 @@ import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
 public class Game {
@@ -39,13 +40,15 @@ public class Game {
 	public static double camDir = 270; // degrees
 	public static int camHeight = 64;
 	
-	public static float m = 2; // Resolution scale
+	public static int m = 2; // Resolution scale
 	
 	public static double FOV = 90;
 	public static int planeWidth = (int) (1920/m);
 	public static double hToWRatio = 9.0/16.0; // 16 : 9 aspect ratio
 	//public static int planeWidth = (int) (2*planeDist*Math.tan(Math.toRadians(FOV/2)));
 	public static int planeHeight = (int) (hToWRatio * planeWidth);
+	
+	
 	public static int planeDist = (int) ((planeWidth/2)/Math.tan(Math.toRadians(FOV/2)));
 	
 	// 2D view
@@ -115,7 +118,12 @@ public class Game {
 	};
 
 	public static void main(String[] args) {
-
+		m = Integer.parseInt(JOptionPane.showInputDialog("Enter resolution scale. \n1 - Full resolution\n2 - Optimal\n4 - Fast\n8 - Fastest"));
+		
+		planeWidth = (int) (Integer.parseInt(JOptionPane.showInputDialog("Enter your display width (in pixels)"))/m);
+		planeHeight = (int) (Integer.parseInt(JOptionPane.showInputDialog("Enter your display height (in pixels)"))/m);
+		planeDist = (int) ((planeWidth/2)/Math.tan(Math.toRadians(FOV/2)));
+		numberofStrips = planeWidth / stripResolution;
 		
 		System.out.println(numberofStrips);
 		
