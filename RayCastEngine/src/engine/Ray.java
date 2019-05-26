@@ -27,19 +27,11 @@ public class Ray {
 		}
 		ax = Game.camPos.x + (Game.camPos.y-ay)/Math.tan(Math.toRadians(rdir));
 		
-		//draw A
-		//g2d.setColor(Color.green);
-		//g2d.setStroke(new BasicStroke(6));
-		//g2d.drawLine((int)ax, (int)ay, (int)ax, (int)ay);
-		
 		//Finding Xa
 		if(0 < rdir && rdir < 180) 
 			xa = Game.cellHeight/Math.tan(Math.toRadians(rdir));
 		else
 			xa = -Game.cellHeight/Math.tan(Math.toRadians(rdir));
-		
-		//Distance from a to ray
-		//double dist = distance(Game.camPos.x, Game.camPos.y, ax, ay);
 		
 		//Check if A touches wall
 		int mapX = (int) (ax/Game.cellWidth);
@@ -52,7 +44,7 @@ public class Ray {
 			return new Point2D.Double(Integer.MAX_VALUE, Integer.MAX_VALUE);
 		
 		//Do collision check
-		if(Game.map[mapX][mapY] > 0) {
+		if(Game.map[mapX][mapY] > 0 && Game.map[mapX][mapY] != 3) {
 			return new Point2D.Double(ax, ay);
 		}
 		
@@ -66,12 +58,6 @@ public class Ray {
 		for(int i = 0; i < maxSteps; i++) {
 			x += xa;
 			y += ya;
-			//g2d.setColor(Color.green);
-			//g2d.setStroke(new BasicStroke(6));
-			//g2d.drawLine((int)x, (int)y, (int)x, (int)y);
-			
-			//Calculate distance
-			//dist = distance(Game.camPos.x, Game.camPos.y, x, y);
 			
 			mapX = (int) (x/Game.cellWidth);
 			mapY = (int) (y/Game.cellHeight);
@@ -83,7 +69,7 @@ public class Ray {
 				break;
 			
 			//Check for collision
-			if(Game.map[mapX][mapY] > 0) {
+			if(Game.map[mapX][mapY] > 0 && Game.map[mapX][mapY] != 3) {
 				return new Point2D.Double(x, y);
 			}
 		}
@@ -114,19 +100,11 @@ public class Ray {
 		}
 		ay = Game.camPos.y + (Game.camPos.x-ax)*Math.tan(Math.toRadians(rdir));
 		
-		//draw A
-		//g2d.setColor(Color.blue);
-		//g2d.setStroke(new BasicStroke(4));
-		//g2d.drawLine((int)ax, (int)ay, (int)ax, (int)ay);
-		
 		//Finding Ya
 		if(rdir < 90 || rdir > 270) 
 			ya = -Game.cellHeight*Math.tan(Math.toRadians(rdir));
 		else
 			ya = Game.cellHeight*Math.tan(Math.toRadians(rdir));
-		
-		//Distance from a to ray
-		//double dist = distance(Game.camPos.x, Game.camPos.y, ax, ay);
 		
 		//Check if A touches wall
 		int mapX = (int) (ax/Game.cellWidth);
@@ -139,10 +117,9 @@ public class Ray {
 			return new Point2D.Double(Integer.MAX_VALUE, Integer.MAX_VALUE);
 		
 		//Collision check
-		if(Game.map[mapX][mapY] > 0) {
+		if(Game.map[mapX][mapY] > 0 && Game.map[mapX][mapY] != 3) {
 			return new Point2D.Double(ax, ay);
 		}
-		
 		
 		
 		//Finding all other points where ray crosses horizontal grid lines
@@ -153,12 +130,6 @@ public class Ray {
 		for(int i = 0; i < maxSteps; i++) {
 			x += xa;
 			y += ya;
-			//g2d.setColor(Color.blue);
-			//g2d.setStroke(new BasicStroke(4));
-			//g2d.drawLine((int)x, (int)y, (int)x, (int)y);
-			
-			//Calculate distance
-			//dist = distance(Game.camPos.x, Game.camPos.y, x, y);
 			
 			mapX = (int) (x/Game.cellWidth);
 			mapY = (int) (y/Game.cellHeight);
@@ -170,7 +141,7 @@ public class Ray {
 				break;
 			
 			//Check for collision
-			if(Game.map[mapX][mapY] > 0) {
+			if(Game.map[mapX][mapY] > 0 && Game.map[mapX][mapY] != 3) {
 				return new Point2D.Double(x, y);
 			}
 		}
