@@ -78,17 +78,16 @@ public class View3D extends JPanel {
 
 		// Cast rays
 		for (int i = 0; i < Game.numberofStrips; i++) {
-			
-			/****************Calculations for normal walls*****************/
-			// Height in world units of current block
-			int currentWallHeight = 64;
-
 			// Ray vars
 			double opp = Game.planeWidth / 2 - i * Game.stripResolution;
 			double adj = Game.planeDist;
 			double rayAngle = Math.toDegrees(Math.atan(opp / adj));
 			double rayDir = Game.camDir + rayAngle;
 			
+			/****************Calculations for normal walls*****************/
+			// Height in world units of current block
+			int currentWallHeight = 64;
+
 			// Horizontal line collision point
 			Point2D.Double p1 = Ray.getPointHor(g2d, Game.camPos.x, Game.camPos.y, rayDir);
 
@@ -99,26 +98,26 @@ public class View3D extends JPanel {
 			double dist1 = Ray.squaredDistance(Game.camPos, p1);
 			double dist2 = Ray.squaredDistance(Game.camPos, p2);
 
-			int dist;
+			double dist;
 			int texOffset;
 
 			// Smallest distance is correct
 			Point2D.Double correctP;
 			boolean isShaded;
 			if (dist1 < dist2) {
-				dist = (int) Math.sqrt(dist1);
+				dist = Math.sqrt(dist1);
 				texOffset = (int) (p1.x % Game.cellWidth);
 				correctP = p1;
 				isShaded = true;
 			} else {
-				dist = (int) Math.sqrt(dist2);
+				dist = Math.sqrt(dist2);
 				texOffset = (int) (p2.y % Game.cellWidth);
 				correctP = p2;
 				isShaded = false;
 			}
 
 			// Calculate undistorted distance to camera
-			double correctDist = (int) (dist * Math.cos(Math.toRadians(Math.abs(rayAngle))));
+			double correctDist = dist * Math.cos(Math.toRadians(Math.abs(rayAngle)));
 			
 			// Calculate point hit on ray into grid coords
 			int mapX = (int) (correctP.x / Game.cellWidth);
@@ -156,23 +155,26 @@ public class View3D extends JPanel {
 			double dist1Tall = Ray.squaredDistance(Game.camPos, p1Tall);
 			double dist2Tall = Ray.squaredDistance(Game.camPos, p2Tall);
 
-			int distTall;
+			double distTall;
 			int texOffsetTall;
 
 			// Smallest distance is correct
 			Point2D.Double correctPTall;
+			boolean isShadedTall;
 			if (dist1Tall < dist2Tall) {
-				distTall = (int) Math.sqrt(dist1Tall);
+				distTall = Math.sqrt(dist1Tall);
 				texOffsetTall = (int) (p1Tall.x % Game.cellWidth);
 				correctPTall = p1Tall;
+				isShadedTall = true;
 			} else {
-				distTall = (int) Math.sqrt(dist2Tall);
+				distTall = Math.sqrt(dist2Tall);
 				texOffsetTall = (int) (p2Tall.y % Game.cellWidth);
 				correctPTall = p2Tall;
+				isShadedTall = false;
 			}
 
 			// Calculate undistorted distance to camera
-			double correctDistTall = (int) (distTall * Math.cos(Math.toRadians(Math.abs(rayAngle))));
+			double correctDistTall = distTall * Math.cos(Math.toRadians(Math.abs(rayAngle)));
 
 			// Calculate point hit on ray into grid coords
 			int mapXTall = (int) (correctPTall.x / Game.cellWidth);
@@ -181,7 +183,9 @@ public class View3D extends JPanel {
 			// Choose texture and block height
 			Image texCurrentTall = sprTallWall;
 			boolean canDrawTallWall;
-			if(distTall != Integer.MAX_VALUE) {
+			
+			//If point is inside map
+			if(mapXTall < Game.gridWidth && mapYTall < Game.gridHeight) {
 				if (Game.map[mapXTall][mapYTall] == 3) {
 					texCurrentTall = sprTallWall;
 					currentWallHeightTall = Game.blockHeight*2;
@@ -206,7 +210,7 @@ public class View3D extends JPanel {
 			}
 			
 			
-			// Draw strips
+			/******Drawing strips*******/
 			g2d.setStroke(new BasicStroke(0));
 			if (!drawTextures) {
 				g2d.setColor(Color.white);
@@ -217,26 +221,35 @@ public class View3D extends JPanel {
 			} else {
 				if(!tallWallIsFront) {
 					if(canDrawTallWall) {
-						//Draw tall wall
+						// Draw tall wall
 						g2d.drawImage(texCurrentTall, Game.stripResolution * i * m,
 								((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
 								(Game.stripResolution * i + Game.stripResolution) * m,
 								(Game.planeHeight / 2 + standardProjectedHeightTall / 2) * m, texOffsetTall, 0,
 								texOffsetTall + Game.stripResolution, currentWallHeightTall, null);
+
+						if(isShadedTall) {
+							//Draw wall shading
+							g2d.setColor(shadeColor);
+							g2d.fillRect(Game.stripResolution * i * m,
+									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
+									Game.stripResolution * m, projectedHeightTall * m);
+						}
+						
+						// Draw Fog when tall wall is behind normal wall
+						if (!tallWallIsFront && drawFog) {
+							int alpha = calculateFogAlpha(correctDistTall);
+
+							g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
+							g2d.fillRect(Game.stripResolution * i * m,
+									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall)
+											* m,
+									Game.stripResolution * m, projectedHeightTall * m);
+
+						}
 					}
 					
-					//Draw Fog when tall wall is behind normal wall
-					if (canDrawTallWall && !tallWallIsFront && drawFog) {
-						int alpha = calculateFogAlpha(correctDistTall);
-						
-						g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
-						g2d.fillRect(Game.stripResolution * i * m,
-								((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-								 Game.stripResolution * m, projectedHeightTall * m);
-						
-					}
-					
-					// draw wall
+					// draw normal wall
 					g2d.drawImage(texCurrent, Game.stripResolution * i * m,
 							((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
 							(Game.stripResolution * i + Game.stripResolution) * m,
@@ -272,6 +285,14 @@ public class View3D extends JPanel {
 								(Game.stripResolution * i + Game.stripResolution) * m,
 								(Game.planeHeight / 2 + standardProjectedHeightTall / 2) * m, texOffsetTall, 0,
 								texOffsetTall + Game.stripResolution, currentWallHeightTall, null);
+						
+						if(isShadedTall) {
+							//Draw wall shading
+							g2d.setColor(shadeColor);
+							g2d.fillRect(Game.stripResolution * i * m,
+									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
+									Game.stripResolution * m, projectedHeightTall * m);
+						}
 					}
 				}
 				
