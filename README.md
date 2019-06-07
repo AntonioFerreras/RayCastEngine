@@ -10,6 +10,7 @@ It splits the screen into many vertical strips, each of these strips casts out a
 
 ## What other features are there?
 - Texture mapped walls
+- Lighting and shadows
 - A skybox
 - Variable height walls (has issues atm)
 - Customizable FOV and resolution
