@@ -34,12 +34,14 @@ public class View3D extends JPanel {
 	Color[][] floorTexArray = {};
 
 	// Other
-	Color fogColor = new Color(207, 222, 247);
+	Color dayFog = new Color(207, 222, 247);
+	Color nightFog = new Color(23, 24, 31);
+	Color fogColor = nightFog;
 	Color shadeColor = new Color(0,0,0,70);
 	int m = Game.m;
 	int scaledPlaneWidth = (int) (Game.planeWidth * m);
 	int scaledPlaneHeight = (int) (Game.planeHeight * m);
-	boolean drawFPS = true;
+	boolean drawFPS = false;
 
 	public View3D() {
 		// Load textures
@@ -48,7 +50,7 @@ public class View3D extends JPanel {
 			sprBrown = ImageIO.read(new File("resources/brownstone.png"));
 			sprFloor = ImageIO.read(new File("resources/planks_oak.png"));
 			sprTallWall = ImageIO.read(new File("resources/sandstone_carved.png"));
-			sprSky = ImageIO.read(new File("resources/sky.png"));
+			sprSky = ImageIO.read(new File("resources/nightsky.png"));
 			skyWidth = sprSky.getWidth(null) / 3;
 			skyHeight = sprSky.getHeight(null);
 		} catch (IOException e) {
@@ -89,10 +91,10 @@ public class View3D extends JPanel {
 			int currentWallHeight = 64;
 
 			// Horizontal line collision point
-			Point2D.Double p1 = Ray.getPointHor(g2d, Game.camPos.x, Game.camPos.y, rayDir);
+			Point2D.Double p1 = Ray.getPointHor(Game.camPos.x, Game.camPos.y, rayDir);
 
 			// Vertical line collision point
-			Point2D.Double p2 = Ray.getPointVert(g2d, Game.camPos.x, Game.camPos.y, rayDir);
+			Point2D.Double p2 = Ray.getPointVert(Game.camPos.x, Game.camPos.y, rayDir);
 
 			// Distance from each possible collision
 			double dist1 = Ray.squaredDistance(Game.camPos, p1);
@@ -103,17 +105,14 @@ public class View3D extends JPanel {
 
 			// Smallest distance is correct
 			Point2D.Double correctP;
-			boolean isShaded;
 			if (dist1 < dist2) {
 				dist = Math.sqrt(dist1);
 				texOffset = (int) (p1.x % Game.cellWidth);
 				correctP = p1;
-				isShaded = true;
 			} else {
 				dist = Math.sqrt(dist2);
 				texOffset = (int) (p2.y % Game.cellWidth);
 				correctP = p2;
-				isShaded = false;
 			}
 
 			// Calculate undistorted distance to camera
@@ -131,8 +130,11 @@ public class View3D extends JPanel {
 			} else if (Game.map[mapX][mapY] == 2) {
 				texCurrent = sprBrown;
 				currentWallHeight = Game.blockHeight;
+			} else if(Game.map[mapX][mapY] == 0) {
+				texCurrent = null;
+				currentWallHeight = Game.blockHeight;
 			} else {
-				texCurrent = sprBrick;
+				texCurrent = sprFloor;
 				currentWallHeight = Game.blockHeight;
 			}
 			
@@ -146,10 +148,10 @@ public class View3D extends JPanel {
 			int currentWallHeightTall = 0;
 			
 			// Horizontal line collision point for tall walls only
-			Point2D.Double p1Tall = Ray.getPointHorTall(g2d, Game.camPos.x, Game.camPos.y, rayDir);
+			Point2D.Double p1Tall = Ray.getPointHorTall(Game.camPos.x, Game.camPos.y, rayDir);
 
 			// Vertical line collision point for tall walls only
-			Point2D.Double p2Tall = Ray.getPointVertTall(g2d, Game.camPos.x, Game.camPos.y, rayDir);
+			Point2D.Double p2Tall = Ray.getPointVertTall(Game.camPos.x, Game.camPos.y, rayDir);
 
 			// Distance from each possible collision for tall walls only
 			double dist1Tall = Ray.squaredDistance(Game.camPos, p1Tall);
@@ -160,17 +162,14 @@ public class View3D extends JPanel {
 
 			// Smallest distance is correct
 			Point2D.Double correctPTall;
-			boolean isShadedTall;
 			if (dist1Tall < dist2Tall) {
 				distTall = Math.sqrt(dist1Tall);
 				texOffsetTall = (int) (p1Tall.x % Game.cellWidth);
 				correctPTall = p1Tall;
-				isShadedTall = true;
 			} else {
 				distTall = Math.sqrt(dist2Tall);
 				texOffsetTall = (int) (p2Tall.y % Game.cellWidth);
 				correctPTall = p2Tall;
-				isShadedTall = false;
 			}
 
 			// Calculate undistorted distance to camera
@@ -221,78 +220,20 @@ public class View3D extends JPanel {
 			} else {
 				if(!tallWallIsFront) {
 					if(canDrawTallWall) {
-						// Draw tall wall
-						g2d.drawImage(texCurrentTall, Game.stripResolution * i * m,
-								((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-								(Game.stripResolution * i + Game.stripResolution) * m,
-								(Game.planeHeight / 2 + standardProjectedHeightTall / 2) * m, texOffsetTall, 0,
-								texOffsetTall + Game.stripResolution, currentWallHeightTall, null);
-
-						if(isShadedTall) {
-							//Draw wall shading
-							g2d.setColor(shadeColor);
-							g2d.fillRect(Game.stripResolution * i * m,
-									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-									Game.stripResolution * m, projectedHeightTall * m);
-						}
-						
-						// Draw Fog when tall wall is behind normal wall
-						if (!tallWallIsFront && drawFog) {
-							int alpha = calculateFogAlpha(correctDistTall);
-
-							g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
-							g2d.fillRect(Game.stripResolution * i * m,
-									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall)
-											* m,
-									Game.stripResolution * m, projectedHeightTall * m);
-
-						}
+						//Draw tall wall behind normal wall strip
+						drawWallColumn(g2d, i, correctDistTall, projectedHeightTall, standardProjectedHeightTall, currentWallHeightTall, texCurrentTall, texOffsetTall, correctPTall);
 					}
 					
-					// draw normal wall
-					g2d.drawImage(texCurrent, Game.stripResolution * i * m,
-							((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
-							(Game.stripResolution * i + Game.stripResolution) * m,
-							(Game.planeHeight / 2 + standardProjectedHeight / 2) * m, texOffset, 0,
-							texOffset + Game.stripResolution, currentWallHeight, null);
-					if(isShaded) {
-						//Draw wall shading
-						g2d.setColor(shadeColor);
-						g2d.fillRect(Game.stripResolution * i * m,
-								((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
-								Game.stripResolution * m, projectedHeight * m);
-					}
+					//Draw normal wall strip in front of tall wall
+					drawWallColumn(g2d, i, correctDist, projectedHeight, standardProjectedHeight, currentWallHeight, texCurrent, texOffset, correctP);
 				} else {
-					// draw wall
-					g2d.drawImage(texCurrent, Game.stripResolution * i * m,
-							((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
-							(Game.stripResolution * i + Game.stripResolution) * m,
-							(Game.planeHeight / 2 + standardProjectedHeight / 2) * m, texOffset, 0,
-							texOffset + Game.stripResolution, currentWallHeight, null);
 					
-					if(isShaded) {
-						//Draw wall shading
-						g2d.setColor(shadeColor);
-						g2d.fillRect(Game.stripResolution * i * m,
-								((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
-								Game.stripResolution * m, projectedHeight * m);
-					}
+					//Draw normal wall strip behind tall wall
+					drawWallColumn(g2d, i, correctDist, projectedHeight, standardProjectedHeight, currentWallHeight, texCurrent, texOffset, correctP);
 					
 					if(canDrawTallWall) {
-						//Draw tall wall
-						g2d.drawImage(texCurrentTall, Game.stripResolution * i * m,
-								((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-								(Game.stripResolution * i + Game.stripResolution) * m,
-								(Game.planeHeight / 2 + standardProjectedHeightTall / 2) * m, texOffsetTall, 0,
-								texOffsetTall + Game.stripResolution, currentWallHeightTall, null);
-						
-						if(isShadedTall) {
-							//Draw wall shading
-							g2d.setColor(shadeColor);
-							g2d.fillRect(Game.stripResolution * i * m,
-									((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-									Game.stripResolution * m, projectedHeightTall * m);
-						}
+						//Draw tall wall in front of normal wall strip
+						drawWallColumn(g2d, i, correctDistTall, projectedHeightTall, standardProjectedHeightTall, currentWallHeightTall, texCurrentTall, texOffsetTall, correctPTall);
 					}
 				}
 				
@@ -325,33 +266,6 @@ public class View3D extends JPanel {
 //				 row++;
 //				 }
 			}
-			
-			// Draw fog
-			if(drawFog) {
-				if(!tallWallIsFront) {
-					int alpha = calculateFogAlpha(correctDist);
-					
-					//Draw fog for normal wall
-					g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
-					g2d.fillRect(Game.stripResolution * i * m,
-							((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
-							Game.stripResolution * m, projectedHeight * m);
-				}
-				
-
-				
-				if (canDrawTallWall && tallWallIsFront) {
-					int alpha = calculateFogAlpha(correctDistTall);
-					
-					g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
-					g2d.fillRect(Game.stripResolution * i * m,
-							((Game.planeHeight / 2 + standardProjectedHeightTall / 2) - projectedHeightTall) * m,
-							 Game.stripResolution * m, projectedHeightTall * m);
-					
-				}
-
-				
-			}
 		}
 
 		// Draw FPS
@@ -363,9 +277,71 @@ public class View3D extends JPanel {
 		}
 	}
 	
+	private void drawWallColumn(Graphics2D g2d, int i, double dist, int projectedHeight, int standardProjectedHeight, int currentWallHeight, Image texCurrent, int texOffset, Point2D.Double rayP) {
+		// draw normal wall
+		g2d.drawImage(texCurrent, Game.stripResolution * i * m,
+				((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight) * m,
+				(Game.stripResolution * i + Game.stripResolution) * m,
+				(Game.planeHeight / 2 + standardProjectedHeight / 2) * m, texOffset, 0,
+				texOffset + Game.stripResolution, currentWallHeight, null);
+		
+		
+		//Calculate light intensity of current strip
+		float lightIntensity = 0; //Light intensity of the current strip
+		
+		//For every light in scene
+		for(int l = 0; l < Game.lights.size(); l++) {
+			PointLight currentLight = Game.lights.get(l);
+			
+			//Add to light intensity of next light in list
+			lightIntensity += currentLight.calculateIntensity(rayP.x, rayP.y);
+			
+			//Make sure intensity stays below 1
+			if (lightIntensity > 1)
+				lightIntensity = 1;
+		}
+		
+		//Draw shading created from lack of light
+		if(dist > 0)
+			drawShading(g2d, i, lightIntensity, projectedHeight, standardProjectedHeight);
+		
+		//Draw fog for normal walls
+		if(drawFog)
+			drawFog(g2d, i, dist, projectedHeight, standardProjectedHeight);
+	}
+	
+	private void drawFog(Graphics2D g2d, int i, double dist, int projectedHeight, int standardProjectedHeight) {
+			int alpha = calculateFogAlpha(dist);
+
+			g2d.setColor(new Color(fogColor.getRed(), fogColor.getGreen(), fogColor.getBlue(), alpha));
+			g2d.fillRect(Game.stripResolution * i * m,
+					((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight)
+							* m,
+					Game.stripResolution * m, projectedHeight * m);
+
+	}
+	
+	private void drawShading(Graphics2D g2d, int i, float lightIntensity, int projectedHeight, int standardProjectedHeight) {
+		int minAlpha = 55;
+		int alpha = (int) map(lightIntensity, 0, 1, 255-minAlpha, 0);
+		
+		//Keep alpha in range
+		if(alpha < 0)
+			alpha = 0;
+		else if (alpha > 255)
+			alpha = 255;
+
+		g2d.setColor(new Color(10, 10, 10, alpha));
+		g2d.fillRect(Game.stripResolution * i * m,
+				((Game.planeHeight / 2 + standardProjectedHeight / 2) - projectedHeight)
+						* m,
+				Game.stripResolution * m, projectedHeight * m);
+
+}
+	
 	private int calculateFogAlpha(double dist) {
-		int minimumDist = Game.cellWidth * 9;
-		double drawDist = Game.cellWidth * 30;
+		int minimumDist = Game.cellWidth * 4;
+		double drawDist = Game.cellWidth * 15;
 		
 		int alpha;
 		if(dist >= minimumDist) {
