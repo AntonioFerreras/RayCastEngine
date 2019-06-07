@@ -14,16 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class View2D extends JPanel {
-	//Camera vars
-//	public static Point2D.Double camPos = Game.camPos;
-//	public static double camDir = 0; // degrees
-//	
-//	public static int planeWidth = Game.planeWidth;
-//	public static int stripResolution = Game.stripResolution;
-//	public static int numberofStrips = Game.numberofStrips;
-//	public static int FOV = Game.FOV;
-//	public static int planeDist = Game.planeDist;
-	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
@@ -53,14 +43,14 @@ public class View2D extends JPanel {
 			double rayAngle = Math.toDegrees(Math.atan(opp/adj));
 			double rayDir = Game.camDir + rayAngle;
 
-			double dist1 = Ray.distance(Game.camPos, Ray.getPointHor(g2d, Game.camPos.x, Game.camPos.y, rayDir));
-			double dist2 = Ray.distance(Game.camPos, Ray.getPointVert(g2d, Game.camPos.x, Game.camPos.y, rayDir));
-			int dist;
+			double dist1 = Ray.distance(Game.camPos, Ray.getPointHorAll(Game.camPos.x, Game.camPos.y, rayDir));
+			double dist2 = Ray.distance(Game.camPos, Ray.getPointVertAll(Game.camPos.x, Game.camPos.y, rayDir));
+			double dist;
 			if(dist1 < dist2)
-				dist = (int)dist1;
+				dist = dist1;
 			else
-				dist = (int)dist2;
-			g2d.setStroke(new BasicStroke(2));
+				dist = dist2;
+			g2d.setStroke(new BasicStroke(1));
 			g2d.setColor(Color.red);
 			g2d.drawLine((int)Game.camPos.x, (int)Game.camPos.y, (int)(Game.camPos.x + dist*Math.cos(Math.toRadians(rayDir))), (int)(Game.camPos.y - dist*Math.sin(Math.toRadians(rayDir))));
 		}
