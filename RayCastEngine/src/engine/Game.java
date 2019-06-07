@@ -5,6 +5,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -23,13 +25,13 @@ public class Game {
 								{ 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2 }, 
 								{ 1, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 2 },
 								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 }, 
-								{ 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 4, 0, 4, 4, 4 },
-								{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 4 }, 
-								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 },
-								{ 1, 0, 0, 2, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 4 }, 
-								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 4 },
-								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 }, 
-								{ 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4 } };
+								{ 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1 },
+								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+								{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0, 1 }, 
+								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 1 },
+								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+								{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
 
 	// Controls
 	static boolean up, down, left, right, turnLeft, turnRight;
@@ -37,19 +39,22 @@ public class Game {
 
 	// Camera vars
 	public static Point2D.Double camPos = new Point2D.Double(gridWidth*cellWidth/2, gridHeight*cellHeight/2);
-	public static double camDir = 270; // degrees
+	public static double camDir = 0; // degrees
 	public static int camHeight = 64;
 	
-	public static int m = 2; // Resolution scale
+	public static int m = 4; // Resolution scale
 	
 	public static double FOV = 90;
-	public static int planeWidth = (int) (1920/m);
+	public static int planeWidth = 1920/m;
 	public static double hToWRatio = 9.0/16.0; // 16 : 9 aspect ratio
 	//public static int planeWidth = (int) (2*planeDist*Math.tan(Math.toRadians(FOV/2)));
 	public static int planeHeight = (int) (hToWRatio * planeWidth);
 	
 	
 	public static int planeDist = (int) ((planeWidth/2)/Math.tan(Math.toRadians(FOV/2)));
+	
+	//Light sources
+	public static List<PointLight> lights = new ArrayList();
 	
 	// 2D view
 	static View2D topDownView = new View2D();
@@ -75,6 +80,11 @@ public class Game {
 //			perspectiveView.repaint();
 //		}
 //	});
+	
+	//testing
+	static double a;
+	static double ox, oy;
+	
 
 	static KeyListener controls = new KeyListener() {
 
@@ -125,9 +135,7 @@ public class Game {
 		planeDist = (int) ((planeWidth/2)/Math.tan(Math.toRadians(FOV/2)));
 		numberofStrips = planeWidth / stripResolution;
 		
-		System.out.println(numberofStrips);
-		
-//		// Window frames
+		// Window frames
 //		JFrame frame2D = new JFrame("2D view");
 //		frame2D.setSize(width, height);
 //		frame2D.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -146,6 +154,19 @@ public class Game {
 
 		// Add controls
 		frame3D.addKeyListener(controls);
+		
+		//Initiate light sources
+		PointLight pl = new PointLight(camPos.x, camPos.y, cellWidth*10, 1f);
+		lights.add(pl);
+		
+		PointLight pl2 = new PointLight(100, 100, cellWidth*4, 1f);
+		lights.add(pl2);
+		
+		//testing
+		
+		a = 0;
+		ox = lights.get(0).getLocation().x;
+		oy = lights.get(0).getLocation().y;
 		
 		long lastLoopTime = System.nanoTime();
 		final int TARGET_FPS = 60;
@@ -178,7 +199,7 @@ public class Game {
 			step();
 
 			// draw everyting
-			//topDownView.repaint();
+			topDownView.repaint();
 			perspectiveView.repaint();
 
 			// we want each frame to take 10 milliseconds, to do this
@@ -225,6 +246,10 @@ public class Game {
 			camDir = 360+camDir;
 		else if (camDir > 360) 
 			camDir = camDir-360;
+		
+		//Move light (for testing)
+		lights.get(0).setLocation(ox, oy + cellWidth*3*Math.sin(a));
+		a+= 0.01;
 	}
 
 }
