@@ -31,7 +31,7 @@ public class View3D extends JPanel {
 	Image sprBrick, sprBrown, sprTallWall, sprSky;
 	BufferedImage sprFloor;
 	int skyWidth, skyHeight;
-	Color[][] floorTexArray = {};
+	Color[][] floorTexArray = new Color[Game.gridWidth*Game.cellWidth][Game.gridHeight*Game.cellHeight];
 
 	// Other
 	Color dayFog = new Color(207, 222, 247);
@@ -77,6 +77,21 @@ public class View3D extends JPanel {
 		//Draw floor
 		g2d.setColor(new Color(50, 50, 50));
 		g2d.fillRect(0, scaledPlaneHeight / 2, scaledPlaneWidth, scaledPlaneHeight / 2);
+		
+		/******Calculations for sprites*******/
+		int[] spriteXOnScreens = new int[Game.sprites.size()];
+		double[] spriteDistances = new double[Game.sprites.size()];
+		
+		for(int s = 0; s < Game.sprites.size(); s++) {
+			Sprite currentSprite = Game.sprites.get(s);
+			
+			double angle = Ray.direction(Game.camPos, currentSprite.getLocation()) - Game.camDir;
+			
+			int opp = (int) (Game.planeDist * Math.tan(Math.toRadians(angle)));
+			spriteXOnScreens[s] = Game.planeWidth/2 - opp;
+			double dist = Ray.distance(Game.camPos, currentSprite.getLocation());
+			spriteDistances[s] = dist * Math.cos(Math.toRadians(Math.abs(angle)));
+		}
 
 		// Cast rays
 		for (int i = 0; i < Game.numberofStrips; i++) {
@@ -208,7 +223,6 @@ public class View3D extends JPanel {
 				tallWallIsFront = true;
 			}
 			
-			
 			/******Drawing strips*******/
 			g2d.setStroke(new BasicStroke(0));
 			if (!drawTextures) {
@@ -240,11 +254,11 @@ public class View3D extends JPanel {
 
 				
 
-//				// Draw floor
-//				 int row = (int) (scaledPlaneHeight/2 + projectedHeight*m/2);
-//				 while(row <= scaledPlaneHeight) {
+				// Draw floor
+//				 int row = (Game.planeHeight / 2 + standardProjectedHeight / 2);
+//				 while(row <= Game.planeHeight) {
 //				 double straightDist = ((double)Game.camHeight * (double)Game.planeDist) /
-//				 (row - scaledPlaneHeight/2);
+//				 (row - Game.planeHeight/2);
 //				 double actualDist = straightDist/Math.cos(Math.toRadians(rayAngle));
 //				 //double oppDist = straightDist*Math.tan(Math.toRadians(Math.abs(rayAngle)));
 //				
@@ -253,21 +267,35 @@ public class View3D extends JPanel {
 //				 Math.cos(Math.toRadians(rayDir)));
 //				 double texY = Game.camPos.y + (actualDist * (float)
 //				 Math.sin(Math.toRadians(rayDir)));
-//				
-//				 int floorTexOffsetX = (int) (texX % Game.cellWidth);
-//				 int floorTexOffsetY = (int) (texY % Game.cellHeight);
-//				
-//				
-//				 g2d.setColor(new Color(sprFloor.getRGB(floorTexOffsetX, floorTexOffsetY)));
-//				 g2d.fillRect((int) (Game.stripResolution * i * m), row, 1, 1);
+//				 
+//				 if(texX > 959)
+//					 texX = 959;
+//				 if(texY > 959)
+//					 texY = 959;
+//				 if(texX < 0)
+//					 texX = 0;
+//				 if(texY < 0)
+//					 texY = 0;
+//				 g2d.setColor(floorTexArray[(int)texX][(int)texY]);
+//				 g2d.fillRect(Game.stripResolution * i * m, row, 1, 1);
 //				
 //				
 //				 //Go one pixel down
 //				 row++;
 //				 }
 			}
+			
 		}
 
+		//Draw sprites 
+		for(int s = 0; s < Game.sprites.size(); s++) {
+			Sprite currentSprite = Game.sprites.get(s);
+			int projectedWidthSprite = (int) (currentSprite.getImage().getWidth(null)*currentSprite.getScale() / spriteDistances[s] * Game.planeDist);
+			int projectedHeightSprite = (int) (currentSprite.getImage().getHeight(null)*currentSprite.getScale() / spriteDistances[s] * Game.planeDist);
+			if(projectedHeightSprite > 0)
+				g2d.drawImage(currentSprite.getImage(), (spriteXOnScreens[s] - projectedWidthSprite/2)*m, Game.planeHeight*m/2 - (projectedHeightSprite/2)*m, projectedWidthSprite*m, projectedHeightSprite*m, null);
+		}
+		
 		// Draw FPS
 		if (drawFPS) {
 			g2d.setFont(new Font("Consolas", Font.PLAIN, 24));
