@@ -1,7 +1,7 @@
 # RayCastEngine
 A 3D engine using the ray casting technique.
 
-![alt text](https://i.imgur.com/MzsNqAw.png)
+![alt text](https://i.imgur.com/fYRHend.png)
 
 This is a 3D engine that utilizes the ray casting technique to render the world view.
 
