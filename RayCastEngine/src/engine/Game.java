@@ -1,13 +1,17 @@
 package engine;
 
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
@@ -27,7 +31,7 @@ public class Game {
 								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 }, 
 								{ 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1 },
 								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
-								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+								{ 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
 								{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 2, 2, 2, 0, 1 }, 
 								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 1 },
 								{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
@@ -55,6 +59,10 @@ public class Game {
 	
 	//Light sources
 	public static List<PointLight> lights = new ArrayList();
+	
+	//Sprites
+	static Image sprLightBulb;
+	public static List<Sprite> sprites = new ArrayList();
 	
 	// 2D view
 	static View2D topDownView = new View2D();
@@ -135,6 +143,13 @@ public class Game {
 		planeDist = (int) ((planeWidth/2)/Math.tan(Math.toRadians(FOV/2)));
 		numberofStrips = planeWidth / stripResolution;
 		
+		//Load sprites
+		try {
+			sprLightBulb = ImageIO.read(new File("resources/lighticon.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		// Window frames
 //		JFrame frame2D = new JFrame("2D view");
 //		frame2D.setSize(width, height);
@@ -156,14 +171,18 @@ public class Game {
 		frame3D.addKeyListener(controls);
 		
 		//Initiate light sources
-		PointLight pl = new PointLight(camPos.x, camPos.y, cellWidth*10, 1f);
+		PointLight pl = new PointLight(camPos.x, camPos.y, cellWidth*8, 1f);
 		lights.add(pl);
 		
 		PointLight pl2 = new PointLight(100, 100, cellWidth*4, 1f);
 		lights.add(pl2);
 		
-		//testing
+		// Initiate sprites
+		Sprite lightBulb = new Sprite(sprLightBulb, lights.get(0).getLocation().y, lights.get(0).getLocation().x);
+		lightBulb.setScale(0.5f);
+		sprites.add(lightBulb);
 		
+		//testing
 		a = 0;
 		ox = lights.get(0).getLocation().x;
 		oy = lights.get(0).getLocation().y;
@@ -249,6 +268,7 @@ public class Game {
 		
 		//Move light (for testing)
 		lights.get(0).setLocation(ox, oy + cellWidth*3*Math.sin(a));
+		sprites.get(0).setLocation(lights.get(0).getLocation().x, lights.get(0).getLocation().y);
 		a+= 0.01;
 	}
 
